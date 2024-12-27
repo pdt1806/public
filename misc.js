@@ -1,9 +1,10 @@
 export const style = `
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   a {
     color: inherit;
     text-decoration: none;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     display: block;
     font-family: Consolas;
     width: max-content;
