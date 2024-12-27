@@ -1,0 +1,16 @@
+{
+  "name": "public",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node index.js"
+  },
+  "author": "pdt1806",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "file-type": "^19.6.0"
+  }
+}
