@@ -49,14 +49,13 @@ app.get("/*", (req, res) => {
             const mimeTypesKeys = Object.keys(mimeTypes);
 
             const mimeTypeCategory =
-              !fileType && !fileStats.isDirectory()
-                ? "unknown"
-                : mimeTypesKeys.find((key) => {
-                    return mimeCategory.includes(key) || (fileType.ext && fileType.ext === key);
-                  }) ||
-                  mimeTypesKeys.find((key) => mimeCategory.includes(key)) ||
-                  mimeTypesKeys.find((key) => mimeCategory.startsWith(key)) ||
-                  "unknown";
+              mimeTypesKeys.find((key) => {
+                const fileExtension = file.split(".").pop();
+                return (fileExtension && fileExtension === key) || (fileType?.ext && fileType?.ext === key);
+              }) ||
+              mimeTypesKeys.find((key) => mimeCategory.includes(key)) ||
+              mimeTypesKeys.find((key) => mimeCategory.startsWith(key)) ||
+              "unknown";
 
             const emoji = mimeTypes[mimeTypeCategory];
 
