@@ -16,14 +16,12 @@ app.use(express.static("public"));
 app.get("/*", (req, res) => {
   const directoryPath = path.join(__dirname, "public", req.params[0] || "");
   fs.stat(directoryPath, (err, stats) => {
-    if (err) {
-      return res.status(404).send({ error: "Not found" });
-    }
+    if (err) return res.status(404).send({ error: "Not found" });
+
     if (stats.isDirectory()) {
       fs.readdir(directoryPath, async (err, files) => {
-        if (err) {
-          return res.status(500).send("Unable to scan directory");
-        }
+        if (err) return res.status(500).send("Unable to scan directory");
+
         const parentPath = path.join(req.path, "..");
 
         const processFile = async (file) => {
@@ -32,11 +30,7 @@ app.get("/*", (req, res) => {
 
           const fileStats = fs.statSync(absoluteFilePath);
 
-          let fileType;
-
-          try {
-            fileType = await fileTypeFromFile(absoluteFilePath);
-          } catch (error) {}
+          const fileType = await fileTypeFromFile(absoluteFilePath).catch(() => undefined);
 
           const mimeCategory = fileType ? fileType.mime : fileStats.isDirectory() ? "directory" : "unknown";
 
@@ -72,12 +66,8 @@ app.get("/*", (req, res) => {
         const backButton = req.path !== "/" ? `<a href="${parentPath}">🔙 Back</a><br />` : "";
         res.send(`${style}${backButton}${fileLinks}`);
       });
-    } else {
-      res.sendFile(directoryPath);
-    }
+    } else res.sendFile(directoryPath);
   });
 });
 
-app.listen(port, () => {
-  console.log(`File server running at http://localhost:${port}`);
-});
+app.listen(port, console.log(`File server running at http://localhost:${port}`));
