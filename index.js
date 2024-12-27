@@ -3,7 +3,7 @@ import { fileTypeFromFile } from "file-type";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { mimeTypes, style } from "./misc.js";
+import { mimeTypes, style, systemFiles } from "./misc.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +13,8 @@ const port = 26124;
 
 app.use((req, res, next) => {
   if (req.path.startsWith("/.") || req.path.includes("/.")) return res.status(403).send({ error: "naughty naughty" });
+  if (systemFiles.some((file) => req.path.toLowerCase().includes(file.toLowerCase())))
+    return res.status(403).send({ error: "naughty naughty" });
   next();
 });
 
@@ -62,7 +64,7 @@ app.get("/*", (req, res) => {
           };
 
           const sortedFiles = files
-            .filter((file) => !file.startsWith("."))
+            .filter((file) => !file.startsWith(".") && !systemFiles.includes(file.toLowerCase()))
             .sort((a, b) => {
               const aHasDot = a.includes(".");
               const bHasDot = b.includes(".");

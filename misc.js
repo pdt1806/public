@@ -51,3 +51,28 @@ export const mimeTypes = {
   script: "📜",
   exe: "🖥️",
 };
+
+export const systemFiles = [
+  "desktop.ini",
+  "thumbs.db",
+  "iconcache.db",
+  "pagefile.sys",
+  "hiberfil.sys",
+  "swapfile.sys",
+  ".bashrc",
+  ".profile",
+  ".bash_profile",
+  ".bash_logout",
+  ".gitconfig",
+  ".vimrc",
+  ".xinitrc",
+  ".zshrc",
+  ".config",
+  ".DS_Store",
+  "._*",
+  ".localized",
+  ".Spotlight-V100",
+  ".Trash",
+  ".fseventsd",
+  ".VolumeIcon.icns",
+];
