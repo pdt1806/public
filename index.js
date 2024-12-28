@@ -11,6 +11,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = 26124;
 
+app.set("trust proxy", true);
+
 app.use((req, res, next) => {
   if (req.path.startsWith("/.") || req.path.includes("/.")) return res.status(403).send({ error: "naughty naughty" });
   if (systemFiles.some((file) => req.path.toLowerCase().includes(file.toLowerCase())))
