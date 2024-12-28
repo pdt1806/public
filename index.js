@@ -3,7 +3,7 @@ import { fileTypeFromFile } from "file-type";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { mimeTypes, style, systemFiles } from "./misc.js";
+import { headers, mimeTypes, script, systemFiles } from "./misc.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -77,7 +77,7 @@ app.get("/*", (req, res) => {
           );
 
           const backButton = req.path !== "/" ? `<a href="${parentPath}">🔙 Back</a><br />` : "";
-          res.send(`${style}${backButton}${fileLinks}`);
+          res.send(`${headers}${backButton}${fileLinks}${script}`);
         });
       } else res.sendFile(directoryPath);
     });

@@ -1,20 +1,50 @@
-export const style = `
+export const headers = `
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>benny's public library</title>
+<link rel="icon" href="https://the-other.bennynguyen.dev/images/web/icon.png" />
 <style>
   a {
     color: inherit;
     text-decoration: none;
     font-size: 1.25rem;
     display: block;
-    font-family: Consolas;
+    font-family: Consolas, monospace;
     width: max-content;
     padding: 0.5rem;
   }
 
   a:hover {
-    background-color: #f0f0f0;
+    background-color: #00000025;
   }
 </style>
+`;
+
+export const script = `
+<script>
+  const turnDark = () => {
+    document.body.style.backgroundColor = "#292929";
+    document.body.style.color = "white";
+    themeButton.textContent = "☀️";
+    localStorage.setItem("theme", "dark");
+  }
+
+  const turnLight = () => {
+    document.body.style.backgroundColor = "white";
+    document.body.style.color = "black";
+    themeButton.textContent = "🌙";
+    localStorage.setItem("theme", "light");
+  }
+
+  const toggleTheme = () => document.body.style.backgroundColor === "white" || document.body.style.backgroundColor === "" ? turnDark() : turnLight()
+
+  const themeButton = document.createElement("button");
+  themeButton.textContent = "🌙";
+  themeButton.onclick = toggleTheme;
+  themeButton.style = "position: fixed; top: 1rem; right: 1rem; font-size: 1.5rem; background-color: transparent; border: none; cursor: pointer; padding: 0.5rem; border-radius: 12px; background-color: #00000025;";
+  document.body.prepend(themeButton);
+
+  if (localStorage.getItem("theme") === "dark") turnDark();
+</script>
 `;
 
 export const mimeTypes = {
