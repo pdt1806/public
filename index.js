@@ -15,6 +15,8 @@ app.use((req, res, next) => {
   if (req.path.startsWith("/.") || req.path.includes("/.")) return res.status(403).send({ error: "naughty naughty" });
   if (systemFiles.some((file) => req.path.toLowerCase().includes(file.toLowerCase())))
     return res.status(403).send({ error: "naughty naughty" });
+  if (req.path.includes("my_website.html"))
+    console.log(`IP ${req.ip} was rick rolled at ${new Date().toLocaleString()}`);
   next();
 });
 
