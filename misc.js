@@ -1,20 +1,49 @@
+const title = "benny's public library";
+const description = "i serve files here";
+const favicon = "https://the-other.bennynguyen.dev/images/web/icon.png";
+
 export const headers = `
+<!DOCTYPE html>
+<html lang="en">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>benny's public library</title>
-<link rel="icon" href="https://the-other.bennynguyen.dev/images/web/icon.png" />
+
+<meta property="og:title" content="${title}" />
+<meta property="og:description" content="${description}" />
+<meta name="twitter:title" content="${title}" />
+<meta name="twitter:description" content="${description}" />
+
+<title>${title}</title>
+<link rel="icon" href="${favicon}" />
 <style>
-  a {
+  * {
+    box-sizing: border-box;
+    font-family: Consolas, monospace;
+    font-size: 1.15rem;
+  }
+
+  .file {
     color: inherit;
     text-decoration: none;
-    font-size: 1.25rem;
     display: block;
-    font-family: Consolas, monospace;
     width: max-content;
+    padding: 0.5rem;
+
+    &:hover {
+      background-color: #00000025;
+    }
+  }
+
+  .dir-nav {
     padding: 0.5rem;
   }
 
-  a:hover {
-    background-color: #00000025;
+  .dir-nav a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 </style>
 `;
@@ -24,27 +53,28 @@ export const script = `
   const turnDark = () => {
     document.body.style.backgroundColor = "#292929";
     document.body.style.color = "white";
-    themeButton.textContent = "☀️";
+    themeButton.textContent = "🔆";
     localStorage.setItem("theme", "dark");
   }
 
   const turnLight = () => {
     document.body.style.backgroundColor = "white";
     document.body.style.color = "black";
-    themeButton.textContent = "🌙";
+    themeButton.textContent = "🌒";
     localStorage.setItem("theme", "light");
   }
 
   const toggleTheme = () => document.body.style.backgroundColor === "white" || document.body.style.backgroundColor === "" ? turnDark() : turnLight()
 
   const themeButton = document.createElement("button");
-  themeButton.textContent = "🌙";
+  themeButton.textContent = "🌒";
   themeButton.onclick = toggleTheme;
-  themeButton.style = "position: fixed; top: 1rem; right: 1rem; font-size: 1.5rem; background-color: transparent; border: none; cursor: pointer; padding: 0.5rem; border-radius: 12px; background-color: #00000025;";
+  themeButton.style = "position: fixed; top: 0.4rem; right: 0.4rem; background-color: transparent; border: none; cursor: pointer; padding: 0.5rem; border-radius: 12px; background-color: #00000025;";
   document.body.prepend(themeButton);
 
   if (localStorage.getItem("theme") === "dark") turnDark();
 </script>
+</html>
 `;
 
 export const mimeTypes = {
