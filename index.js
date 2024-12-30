@@ -3,10 +3,9 @@ import { fileTypeFromFile } from "file-type";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { headers, mimeTypes, script, systemFiles } from "./misc.js";
+import { headers, mimeTypes, systemFiles, watermark } from "./misc.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const port = 26124;
@@ -54,12 +53,23 @@ const sortFiles = (files) => {
     });
 };
 
+const scripts = await (async function () {
+  const scriptsDir = path.join(__dirname, "scripts");
+  if (!fs.existsSync(scriptsDir)) return "";
+
+  const files = await fs.promises.readdir(scriptsDir);
+  return files
+    .filter((file) => file.endsWith(".js"))
+    .map((file) => `<script src="/scripts/${file}"></script>`)
+    .join("\n");
+})(); // scripts stay the same so no need to re-run this function, assign it to a variable
+
 // ----------------------------------------------------------
 
 app.set("trust proxy", true);
 
 app.use((req, res, next) => {
-  if (req.path.startsWith("/.") || req.path.includes("/.")) return res.status(403).send({ error: "naughty naughty" });
+  if (req.path.includes("/.")) return res.status(403).send({ error: "naughty naughty" });
 
   if (systemFiles.some((file) => req.path.toLowerCase().includes(file.toLowerCase())))
     return res.status(403).send({ error: "naughty naughty" });
@@ -70,10 +80,14 @@ app.use((req, res, next) => {
     return res.sendFile(video);
   }
 
+  if (req.path.startsWith("/scripts/")) {
+    const scriptPath = path.join(__dirname, req.path);
+    if (fs.existsSync(scriptPath)) return res.sendFile(scriptPath);
+    return res.status(404).send({ error: "Not found" });
+  }
+
   next();
 });
-
-app.use(express.static("public", { dotfiles: "ignore" }));
 
 app.get("/*", (req, res) => {
   try {
@@ -81,22 +95,23 @@ app.get("/*", (req, res) => {
     fs.stat(directoryPath, (err, stats) => {
       if (err) return res.status(404).send({ error: "Not found" });
 
-      if (stats.isDirectory()) {
-        fs.readdir(directoryPath, async (err, files) => {
-          if (err) return res.status(500).send({ error: "Internal server error" });
+      if (!stats.isDirectory()) return res.sendFile(directoryPath); // send file
 
-          const fileLinks = await Promise.all(
-            sortFiles(files).map((file) => processFile(req, directoryPath, file))
-          ).then((results) => results.reduce((acc, curr) => acc + curr, ""));
+      // display dir ui
+      fs.readdir(directoryPath, async (err, files) => {
+        if (err) return res.status(500).send({ error: "Internal server error" });
 
-          const backButton =
-            req.path !== "/" ? `<a href="${path.join(req.path, "..")}" class="file">⬅️ Back</a><br />` : "";
+        const fileLinks = (
+          await Promise.all(sortFiles(files).map((file) => processFile(req, directoryPath, file)))
+        ).join("");
 
-          const directoryNavigation = `<div class="dir-nav"><a href="/">🏠</a> / ${getDirectoryPath(req)}</div><hr />`;
+        const backButton =
+          req.path !== "/" ? `<a href="${path.join(req.path, "..")}" class="file">⬅️ Back</a><br />` : "";
 
-          res.send(`${headers}${directoryNavigation}${backButton}${fileLinks}${script}`);
-        });
-      } else res.sendFile(directoryPath);
+        const directoryNavigation = `<div class="dir-nav"><a href="/">🏠</a> / ${getDirectoryPath(req)}</div><hr />`;
+
+        res.send(`${headers}${directoryNavigation}${backButton}${fileLinks}${watermark}${scripts}</html>`);
+      });
     });
   } catch (error) {
     res.status(500).send({ error: "Internal server error" });

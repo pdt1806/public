@@ -48,34 +48,8 @@ export const headers = `
 </style>
 `;
 
-export const script = `
-<script>
-  const turnDark = () => {
-    document.body.style.backgroundColor = "#292929";
-    document.body.style.color = "white";
-    themeButton.textContent = "🔆";
-    localStorage.setItem("theme", "dark");
-  }
-
-  const turnLight = () => {
-    document.body.style.backgroundColor = "white";
-    document.body.style.color = "black";
-    themeButton.textContent = "🌒";
-    localStorage.setItem("theme", "light");
-  }
-
-  const toggleTheme = () => document.body.style.backgroundColor === "white" || document.body.style.backgroundColor === "" ? turnDark() : turnLight()
-
-  const themeButton = document.createElement("button");
-  themeButton.textContent = "🌒";
-  themeButton.onclick = toggleTheme;
-  themeButton.style = "position: fixed; top: 0.4rem; right: 0.4rem; background-color: transparent; border: none; cursor: pointer; padding: 0.5rem; border-radius: 12px; background-color: #00000025;";
-  document.body.prepend(themeButton);
-
-  if (localStorage.getItem("theme") === "dark") turnDark();
-</script>
-</html>
-`;
+export const watermark =
+  '<div id="watermark" style="position: fixed; bottom: 0; right: 0; padding: 0.5rem; font-size: 0.75rem; border-radius: 8px 0 0 0; background-color: #00000025; user-select: none"></div>';
 
 export const mimeTypes = {
   directory: "📁",
