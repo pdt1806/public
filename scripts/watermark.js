@@ -5,20 +5,17 @@ const watermarkList = [
   "ベニーの公共図書館",
 ];
 
-const currentWatermarkIndex = localStorage.getItem("watermarkIndex");
+const watermarkDiv = document.createElement("div");
+watermarkDiv.id = "watermark";
+document.body.append(watermarkDiv);
 
-const watermarkDiv = document.getElementById("watermark");
-watermarkDiv.style.transition = "transform 0.1s";
+const currentWatermarkIndex = parseInt(localStorage.getItem("watermarkIndex"));
 
 let watermarkIndex = currentWatermarkIndex || 0;
 watermarkDiv.textContent = watermarkList[watermarkIndex];
 
 const updateWatermark = () => {
-  watermarkDiv.style.transform = "scale(1.05)";
   watermarkIndex = (watermarkIndex + 1) % watermarkList.length;
-  setTimeout(() => {
-    watermarkDiv.style.transform = "scale(1)";
-  }, 100);
   watermarkDiv.textContent = watermarkList[watermarkIndex];
   localStorage.setItem("watermarkIndex", watermarkIndex);
 };

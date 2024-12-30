@@ -1,6 +1,6 @@
 const title = "benny's public library";
-const description = "i serve files here";
-const favicon = "https://the-other.bennynguyen.dev/images/web/icon.png";
+const description = "just a normal file server";
+export const favicon = "https://the-other.bennynguyen.dev/images/web/icon.png";
 
 export const headers = `
 <!DOCTYPE html>
@@ -14,42 +14,8 @@ export const headers = `
 
 <title>${title}</title>
 <link rel="icon" href="${favicon}" />
-<style>
-  * {
-    box-sizing: border-box;
-    font-family: Consolas, monospace;
-    font-size: 1.15rem;
-  }
-
-  .file {
-    color: inherit;
-    text-decoration: none;
-    display: block;
-    width: max-content;
-    padding: 0.5rem;
-
-    &:hover {
-      background-color: #00000025;
-    }
-  }
-
-  .dir-nav {
-    padding: 0.5rem;
-  }
-
-  .dir-nav a {
-    color: inherit;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-</style>
+<link rel="stylesheet" href="/styles/index.css" />
 `;
-
-export const watermark =
-  '<div id="watermark" style="position: fixed; bottom: 0; right: 0; padding: 0.5rem; font-size: 0.75rem; border-radius: 8px 0 0 0; background-color: #00000025; user-select: none"></div>';
 
 export const mimeTypes = {
   directory: "📁",

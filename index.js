@@ -3,7 +3,8 @@ import { fileTypeFromFile } from "file-type";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { headers, mimeTypes, systemFiles, watermark } from "./misc.js";
+import { mdToHtml } from "./md-to-html.js";
+import { headers, mimeTypes, systemFiles } from "./misc.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -53,6 +54,8 @@ const sortFiles = (files) => {
     });
 };
 
+// ----------------------------------------------------------
+
 const scripts = await (async function () {
   const scriptsDir = path.join(__dirname, "scripts");
   if (!fs.existsSync(scriptsDir)) return "";
@@ -68,7 +71,7 @@ const scripts = await (async function () {
 
 app.set("trust proxy", true);
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   if (req.path.includes("/.")) return res.status(403).send({ error: "naughty naughty" });
 
   if (systemFiles.some((file) => req.path.toLowerCase().includes(file.toLowerCase())))
@@ -84,6 +87,20 @@ app.use((req, res, next) => {
     const scriptPath = path.join(__dirname, req.path);
     if (fs.existsSync(scriptPath)) return res.sendFile(scriptPath);
     return res.status(404).send({ error: "Not found" });
+  }
+
+  if (req.path.startsWith("/styles/")) {
+    const stylePath = path.join(__dirname, req.path);
+    if (fs.existsSync(stylePath)) return res.sendFile(stylePath);
+    return res.status(404).send({ error: "Not found" });
+  }
+
+  if (req.path.endsWith(".md") && !req.path.includes("/download_md/")) {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const markdownFile = decodeURIComponent(path.join(__dirname, "public", req.path));
+    if (!fs.existsSync(markdownFile)) return res.status(404).send({ error: "Not found" });
+    if (url.searchParams.get("download") === "true") return res.download(markdownFile);
+    return res.send(await mdToHtml(__dirname, markdownFile));
   }
 
   next();
@@ -110,7 +127,7 @@ app.get("/*", (req, res) => {
 
         const directoryNavigation = `<div class="dir-nav"><a href="/">🏠</a> / ${getDirectoryPath(req)}</div><hr />`;
 
-        res.send(`${headers}${directoryNavigation}${backButton}${fileLinks}${watermark}${scripts}</html>`);
+        res.send(`${headers}${directoryNavigation}${backButton}${fileLinks}${scripts}\n</html>`);
       });
     });
   } catch (error) {

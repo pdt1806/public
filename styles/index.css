@@ -1,0 +1,68 @@
+* {
+  box-sizing: border-box;
+  font-family: Consolas, monospace, sans-serif;
+}
+
+body {
+  font-size: 1.25rem;
+}
+
+.file {
+  color: inherit;
+  text-decoration: none;
+  display: block;
+  width: max-content;
+  padding: 0.5rem;
+
+  &:hover {
+    background-color: #00000025;
+  }
+}
+
+.dir-nav {
+  padding: 0.5rem;
+}
+
+.dir-nav a {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+#theme-button {
+  font-size: 1.25rem;
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 12px;
+  background-color: #00000025;
+  transition: transform 0.1s;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+#watermark {
+  font-size: 1rem;
+  font-family: monospace, sans-serif;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  padding: 0.5rem;
+  border-radius: 8px 0 0 0;
+  background-color: #00000025;
+  user-select: none;
+  transition: transform 0.1s;
+
+  &:active {
+    transform: scale(1.05);
+  }
+}
