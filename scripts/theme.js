@@ -28,4 +28,7 @@ themeButton.onclick = toggleTheme;
 themeButton.id = "theme-button";
 document.body.prepend(themeButton);
 
-if (localStorage.getItem("theme") === "dark") turnDark();
+if (localStorage.getItem("theme") === "dark") {
+  turnDark();
+  document.head.removeChild(document.querySelector("style"));
+}

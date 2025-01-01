@@ -1,15 +1,18 @@
 import express from "express";
 import { fileTypeFromFile } from "file-type";
 import fs from "fs";
+import html from "html";
 import path from "path";
 import { fileURLToPath } from "url";
-import { mdToHtml } from "./md-to-html.js";
-import { headers, mimeTypes, systemFiles } from "./misc.js";
+import { mdToHtml } from "./utils/md-to-html.js";
+import { mimeTypes, previewTags, systemFiles } from "./utils/misc.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const port = 26124;
+
+const htmlContent = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
 
 // ----------------------------------------------------------
 
@@ -56,19 +59,6 @@ const sortFiles = (files) => {
 
 // ----------------------------------------------------------
 
-const scripts = await (async function () {
-  const scriptsDir = path.join(__dirname, "scripts");
-  if (!fs.existsSync(scriptsDir)) return "";
-
-  const files = await fs.promises.readdir(scriptsDir);
-  return files
-    .filter((file) => file.endsWith(".js"))
-    .map((file) => `<script src="/scripts/${file}"></script>`)
-    .join("\n");
-})(); // scripts stay the same so no need to re-run this function, assign it to a variable
-
-// ----------------------------------------------------------
-
 app.set("trust proxy", true);
 
 app.use(async (req, res, next) => {
@@ -100,7 +90,7 @@ app.use(async (req, res, next) => {
     const markdownFile = decodeURIComponent(path.join(__dirname, "public", req.path));
     if (!fs.existsSync(markdownFile)) return res.status(404).send({ error: "Not found" });
     if (url.searchParams.get("download") === "true") return res.download(markdownFile);
-    return res.send(await mdToHtml(__dirname, markdownFile));
+    return res.send(html.prettyPrint(await mdToHtml(__dirname, markdownFile)));
   }
 
   next();
@@ -125,9 +115,15 @@ app.get("/*", (req, res) => {
         const backButton =
           req.path !== "/" ? `<a href="${path.join(req.path, "..")}" class="file">⬅️ Back</a><br />` : "";
 
-        const directoryNavigation = `<div class="dir-nav"><a href="/">🏠</a> / ${getDirectoryPath(req)}</div><hr />`;
+        const prettyHtmlContent = html.prettyPrint(
+          htmlContent
+            .replace("{{PREVIEW_TAGS}}", previewTags)
+            .replace("{{DIR_NAV}}", getDirectoryPath(req))
+            .replace("{{BACK_BUTTON}}", backButton)
+            .replace("{{FILE_LINKS}}", fileLinks)
+        );
 
-        res.send(`${headers}${directoryNavigation}${backButton}${fileLinks}${scripts}\n</html>`);
+        res.send(prettyHtmlContent);
       });
     });
   } catch (error) {

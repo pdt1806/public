@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{FILE_NAME}} - benny's public library</title>
+    <link rel="icon" href="https://the-other.bennynguyen.dev/images/web/icon.png" />
+    <link rel="stylesheet" href="/styles/index.css" />
+    <link rel="stylesheet" href="/styles/markdown.css" />
+  </head>
+  <style></style>
+  <body>
+    <div class="nav-section">
+      <a id="back-button">⬅️ Back</a>
+      <a href="?download=true">Download markdown file</a>
+    </div>
+    {{GENERATED_HTML}}
+    <script src="/scripts/theme.js"></script>
+    <script src="/scripts/watermark.js"></script>
+  </body>
+  <script>
+    const backButton = document.getElementById("back-button");
+    backButton.href = document.referrer;
+  </script>
+</html>

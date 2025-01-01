@@ -1,12 +1,8 @@
 const title = "benny's public library";
 const description = "just a normal file server";
-export const favicon = "https://the-other.bennynguyen.dev/images/web/icon.png";
+const favicon = "https://the-other.bennynguyen.dev/images/web/icon.png";
 
-export const headers = `
-<!DOCTYPE html>
-<html lang="en">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+export const previewTags = `
 <meta property="og:title" content="${title}" />
 <meta property="og:description" content="${description}" />
 <meta name="twitter:title" content="${title}" />
@@ -14,7 +10,6 @@ export const headers = `
 
 <title>${title}</title>
 <link rel="icon" href="${favicon}" />
-<link rel="stylesheet" href="/styles/index.css" />
 `;
 
 export const mimeTypes = {
