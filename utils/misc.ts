@@ -1,17 +1,3 @@
-const title = "benny's public library";
-const description = "just a normal file server";
-const favicon = "https://the-other.bennynguyen.dev/images/web/icon.png";
-
-export const previewTags = `
-<meta property="og:title" content="${title}" />
-<meta property="og:description" content="${description}" />
-<meta name="twitter:title" content="${title}" />
-<meta name="twitter:description" content="${description}" />
-
-<title>${title}</title>
-<link rel="icon" href="${favicon}" />
-`;
-
 export const mimeTypes: { [key: string]: string } = {
   directory: "📁",
   file: "📄",

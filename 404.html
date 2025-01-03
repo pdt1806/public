@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{FILE_NAME}} - benny's public library</title>
+    <title>404 - benny's public library</title>
     <link rel="icon" href="https://the-other.bennynguyen.dev/images/web/icon.png" />
     <link rel="stylesheet" href="/styles/index.css" />
     <link rel="stylesheet" href="/styles/markdown.css" />
@@ -11,15 +11,15 @@
   <style></style>
   <body>
     <div class="nav-section">
-      <a id="back-button">⬅️ Back</a>
-      <a href="?d=1">Download markdown file</a>
+      <a href="/">⬅️ Back</a>
     </div>
-    {{GENERATED_HTML}}
+    <h1>404 Not Found - benny's public library</h1>
+    <hr />
+    <p>
+      The page you are looking for does not exist. If you think this is a mistake, please contact
+      <a href="mailto:me@bennynguyen.dev">me@bennynguyen.dev</a>.
+    </p>
     <script src="/scripts/theme.js"></script>
     <script src="/scripts/watermark.js"></script>
   </body>
-  <script>
-    const backButton = document.getElementById("back-button");
-    backButton.href = document.referrer;
-  </script>
 </html>

@@ -5,8 +5,7 @@ import fs, { Stats } from "fs";
 import html from "html";
 import path from "path";
 import { fileURLToPath } from "url";
-import { mdToHtml } from "./utils/ts/md-to-html.js";
-import { mimeTypes, previewTags, systemFiles } from "./utils/ts/misc.js";
+import { mimeTypes, systemFiles } from "./utils/misc.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -41,7 +40,6 @@ const processFile = async (req: Request, directoryPath: string, file: string): P
 
   const fileType: FileTypeResult | undefined = await fileTypeFromBuffer(fs.readFileSync(absoluteFilePath));
   const mimeCategory = fileType ? fileType.mime : fileStats.isDirectory() ? "directory" : "unknown";
-
   const fileExtension = file.split(".").pop() || "";
 
   const mimeTypeCategory = findMimeTypeCategory(fileExtension, fileType, mimeCategory);
@@ -65,6 +63,7 @@ const sortFiles = (files: string[]) => {
   return files
     .filter((file) => !file.startsWith(".") && !systemFiles.includes(file.toLowerCase()))
     .sort((a, b) => {
+      // hasDot means it is a file, not a folder
       const aHasDot = a.includes(".");
       const bHasDot = b.includes(".");
       if (aHasDot && !bHasDot) return 1;
@@ -73,55 +72,39 @@ const sortFiles = (files: string[]) => {
     });
 };
 
+const return404 = (res: Response) => {
+  const htmlContent = fs.readFileSync(path.join(__dirname, "404.html"), "utf8");
+  res.status(404).send(htmlContent);
+};
+
 // ----------------------------------------------------------
 
 app.set("trust proxy", true);
 
-app.use(express.raw({ limit: "50mb", type: "application/octet-stream" }));
-
 app.use(async (req: Request, res: Response, next): Promise<any> => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
-
   if (req.path.includes("/.")) return res.status(403).send({ error: "naughty naughty" });
 
   if (systemFiles.some((file) => req.path.toLowerCase().includes(file.toLowerCase())))
     return res.status(403).send({ error: "naughty naughty" });
 
-  // download file (not view)
-  if (url.searchParams.get("d") === "1") {
-    const downloadPath = decodeURIComponent(path.join(__dirname, "public", req.path));
-    if (fs.existsSync(downloadPath)) return res.download(downloadPath);
-    return res.status(404).send({ error: "Not found" });
-  }
-
   if (req.path === "/r.mp4") {
-    const video = path.join(__dirname, "rick_roll", "r.mp4");
-    console.log(`[${new Date().toLocaleString()}] IP ${req.ip} was rick rolled`);
-    return res.sendFile(video);
+    const videoPath = path.join(__dirname, "utils", "r.mp4");
+    const referrer = req.get("Referrer") || "";
+    if (!referrer.includes("/r.mp4")) console.log(`[${new Date().toLocaleString()}] IP ${req.ip} was rick rolled`);
+    return res.sendFile(videoPath);
   }
 
   if (req.path.startsWith("/scripts/")) {
     const scriptPath = path.join(__dirname, req.path);
     if (fs.existsSync(scriptPath)) return res.sendFile(scriptPath);
-    return res.status(404).send({ error: "Not found" });
+    return return404(res);
   }
 
   if (req.path.startsWith("/styles/")) {
     const stylePath = path.join(__dirname, req.path);
     if (fs.existsSync(stylePath)) return res.sendFile(stylePath);
-    return res.status(404).send({ error: "Not found" });
+    return return404(res);
   }
-
-  // --------------------------------------------
-  // view files in browser
-
-  if (req.path.toLowerCase().endsWith(".md")) {
-    const markdownFile = decodeURIComponent(path.join(__dirname, "public", req.path));
-    if (!fs.existsSync(markdownFile)) return res.status(404).send({ error: "Not found" });
-    return res.send(html.prettyPrint(await mdToHtml(__dirname, markdownFile)));
-  }
-
-  // --------------------------------------------
 
   next();
 });
@@ -130,7 +113,7 @@ app.get("/*", (req: Request, res: Response) => {
   try {
     const directoryPath = path.join(__dirname, "public", req.params[0] || "");
     fs.stat(directoryPath, (err, stats) => {
-      if (err) return res.status(404).send({ error: "Not found" });
+      if (err) return return404(res);
 
       if (!stats.isDirectory()) return res.sendFile(directoryPath); // send file
 
@@ -147,7 +130,6 @@ app.get("/*", (req: Request, res: Response) => {
 
         const prettyHtmlContent = html.prettyPrint(
           htmlContent
-            .replace("{{PREVIEW_TAGS}}", previewTags)
             .replace("{{DIR_NAV}}", getDirectoryPath(req))
             .replace("{{BACK_BUTTON}}", backButton)
             .replace("{{FILE_LINKS}}", fileLinks)
