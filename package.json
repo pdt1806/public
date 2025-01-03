@@ -2,11 +2,8 @@
   "name": "public",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "type": "module",
-  "scripts": {
-    "dev": "node index.js"
-  },
   "author": "pdt1806",
   "license": "ISC",
   "dependencies": {
@@ -14,5 +11,13 @@
     "file-type": "^19.6.0",
     "html": "^1.0.0",
     "showdown": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/html": "^1.0.4",
+    "@types/node": "^22.10.3",
+    "@types/showdown": "^2.0.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
   }
 }

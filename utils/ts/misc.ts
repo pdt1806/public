@@ -12,7 +12,7 @@ export const previewTags = `
 <link rel="icon" href="${favicon}" />
 `;
 
-export const mimeTypes = {
+export const mimeTypes: { [key: string]: string } = {
   directory: "📁",
   file: "📄",
   image: "🖼️",
@@ -47,7 +47,7 @@ export const mimeTypes = {
   exe: "🖥️",
 };
 
-export const systemFiles = [
+export const systemFiles: string[] = [
   "desktop.ini",
   "thumbs.db",
   "iconcache.db",

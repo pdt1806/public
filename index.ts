@@ -1,11 +1,12 @@
+import type { Request, Response } from "express";
 import express from "express";
-import { fileTypeFromFile } from "file-type";
-import fs from "fs";
+import { fileTypeFromBuffer, FileTypeResult } from "file-type";
+import fs, { Stats } from "fs";
 import html from "html";
 import path from "path";
 import { fileURLToPath } from "url";
-import { mdToHtml } from "./utils/md-to-html.js";
-import { mimeTypes, previewTags, systemFiles } from "./utils/misc.js";
+import { mdToHtml } from "./utils/ts/md-to-html.js";
+import { mimeTypes, previewTags, systemFiles } from "./utils/ts/misc.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,27 +15,42 @@ const port = 26124;
 
 const htmlContent = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
 
+const mimeTypesKeys = Object.keys(mimeTypes);
+
 // ----------------------------------------------------------
 
-const processFile = async (req, directoryPath, file) => {
-  const filePath = path.join(req.path, file);
-  const absoluteFilePath = path.join(directoryPath, file);
-  const fileStats = fs.statSync(absoluteFilePath);
-  const fileType = await fileTypeFromFile(absoluteFilePath).catch(() => {});
-  const mimeCategory = fileType ? fileType.mime : fileStats.isDirectory() ? "directory" : "unknown";
-  const mimeTypesKeys = Object.keys(mimeTypes);
-  const fileExtension = file.split(".").pop();
+const findMimeTypeCategory = (
+  fileExtension: string,
+  fileType: FileTypeResult | undefined,
+  mimeCategory: string
+): string => {
   const mimeTypeCategory =
     mimeTypesKeys.find((key) => [fileExtension, fileType?.ext].includes(key)) ||
     mimeTypesKeys.find((key) => mimeCategory.includes(key)) ||
     mimeTypesKeys.find((key) => mimeCategory.startsWith(key)) ||
     "unknown";
+
+  return mimeTypeCategory;
+};
+
+const processFile = async (req: Request, directoryPath: string, file: string): Promise<string> => {
+  const filePath = path.join(req.path, file);
+  const absoluteFilePath = path.join(directoryPath, file);
+  const fileStats: Stats = fs.statSync(absoluteFilePath);
+  if (fileStats.isDirectory()) return `<a href="${filePath}" class="file">📁 ${file}</a>`;
+
+  const fileType: FileTypeResult | undefined = await fileTypeFromBuffer(fs.readFileSync(absoluteFilePath));
+  const mimeCategory = fileType ? fileType.mime : fileStats.isDirectory() ? "directory" : "unknown";
+
+  const fileExtension = file.split(".").pop() || "";
+
+  const mimeTypeCategory = findMimeTypeCategory(fileExtension, fileType, mimeCategory);
   const emoji = mimeTypes[mimeTypeCategory];
 
   return `<a href="${filePath}" class="file">${emoji} ${file}</a>`;
 };
 
-const getDirectoryPath = (req) => {
+const getDirectoryPath = (req: Request) => {
   return req.path
     .split("/")
     .filter((segment) => segment)
@@ -45,7 +61,7 @@ const getDirectoryPath = (req) => {
     .join(" / ");
 };
 
-const sortFiles = (files) => {
+const sortFiles = (files: string[]) => {
   return files
     .filter((file) => !file.startsWith(".") && !systemFiles.includes(file.toLowerCase()))
     .sort((a, b) => {
@@ -61,11 +77,22 @@ const sortFiles = (files) => {
 
 app.set("trust proxy", true);
 
-app.use(async (req, res, next) => {
+app.use(express.raw({ limit: "50mb", type: "application/octet-stream" }));
+
+app.use(async (req: Request, res: Response, next): Promise<any> => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+
   if (req.path.includes("/.")) return res.status(403).send({ error: "naughty naughty" });
 
   if (systemFiles.some((file) => req.path.toLowerCase().includes(file.toLowerCase())))
     return res.status(403).send({ error: "naughty naughty" });
+
+  // download file (not view)
+  if (url.searchParams.get("d") === "1") {
+    const downloadPath = decodeURIComponent(path.join(__dirname, "public", req.path));
+    if (fs.existsSync(downloadPath)) return res.download(downloadPath);
+    return res.status(404).send({ error: "Not found" });
+  }
 
   if (req.path === "/r.mp4") {
     const video = path.join(__dirname, "rick_roll", "r.mp4");
@@ -85,18 +112,21 @@ app.use(async (req, res, next) => {
     return res.status(404).send({ error: "Not found" });
   }
 
-  if (req.path.endsWith(".md") && !req.path.includes("/download_md/")) {
-    const url = new URL(req.url, `http://${req.headers.host}`);
+  // --------------------------------------------
+  // view files in browser
+
+  if (req.path.toLowerCase().endsWith(".md")) {
     const markdownFile = decodeURIComponent(path.join(__dirname, "public", req.path));
     if (!fs.existsSync(markdownFile)) return res.status(404).send({ error: "Not found" });
-    if (url.searchParams.get("download") === "true") return res.download(markdownFile);
     return res.send(html.prettyPrint(await mdToHtml(__dirname, markdownFile)));
   }
+
+  // --------------------------------------------
 
   next();
 });
 
-app.get("/*", (req, res) => {
+app.get("/*", (req: Request, res: Response) => {
   try {
     const directoryPath = path.join(__dirname, "public", req.params[0] || "");
     fs.stat(directoryPath, (err, stats) => {
@@ -131,4 +161,4 @@ app.get("/*", (req, res) => {
   }
 });
 
-app.listen(port, console.log(`File server running at http://localhost:${port}`));
+app.listen(port, () => console.log(`File server running at http://localhost:${port}`));
