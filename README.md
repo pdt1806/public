@@ -1,6 +1,6 @@
 # benny's public library
 
-An HTTP file server that serves files from a directory, except I made it public so that I can share files with everyone over the internet.
+An HTTP file server that serves files from a directory, except I made it public so that I can share files with everyone over the Internet.
 
 ## Inspirations
 
