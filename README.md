@@ -1,6 +1,6 @@
 # benny's public library
 
-This is basically just an http file server that serves files from a directory. Except I made it public so that I can share files with everyone over the internet.
+An HTTP file server that serves files from a directory, except I made it public so that I can share files with everyone over the internet.
 
 ## Inspirations
 
@@ -28,7 +28,7 @@ Files are served from my personal server using my home internet connection, and 
 ### Extra features 🎉
 
 - ✅ Dark/Light mode.
-- ✅ Server-side rendering (not really a feature, but I just wanted to mention it).
+- ✅ Server-side rendering (not really a feature, I just wanted to mention it).
 
 ### How to set up the server ⚙️ (I mean you should build your own, but if you want to use mine, here's how)
 

@@ -1,7 +1,7 @@
 {
   "name": "public",
   "version": "1.0.0",
-  "description": "",
+  "description": "An HTTP file server that serves files from a directory, except I made it public so that I can share files with everyone over the internet.",
   "main": "index.ts",
   "type": "module",
   "author": "pdt1806",

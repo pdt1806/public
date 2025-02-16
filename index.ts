@@ -94,6 +94,9 @@ app.use(async (req: Request, res: Response, next): Promise<any> => {
     return res.sendFile(videoPath);
   }
 
+  if (["/thumbnail.png", "/icon.png"].includes(req.path))
+    return res.sendFile(path.join(__dirname, "utils", "images", "web", req.path.replace("/", "")));
+
   if (req.path.startsWith("/scripts/")) {
     const scriptPath = path.join(__dirname, req.path);
     if (fs.existsSync(scriptPath)) return res.sendFile(scriptPath);
