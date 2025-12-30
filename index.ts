@@ -60,16 +60,20 @@ const getDirectoryPath = (req: Request) => {
 };
 
 const sortFiles = (files: string[]) => {
-  return files
-    .filter((file) => !file.startsWith(".") && !systemFiles.includes(file.toLowerCase()))
-    .sort((a, b) => {
-      // hasDot means it is a file, not a folder
-      const aHasDot = a.includes(".");
-      const bHasDot = b.includes(".");
-      if (aHasDot && !bHasDot) return 1;
-      if (!aHasDot && bHasDot) return -1;
-      return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
-    });
+  return (
+    files
+      .filter((file) => !file.startsWith(".") && !systemFiles.includes(file.toLowerCase())) // hide hidden and system files
+
+      // sort alphabetically, with directories first
+      .sort((a, b) => {
+        // hasDot means it is a file, not a folder
+        const aHasDot = a.includes(".");
+        const bHasDot = b.includes(".");
+        if (aHasDot && !bHasDot) return 1;
+        if (!aHasDot && bHasDot) return -1;
+        return a.localeCompare(b, undefined, { numeric: false, sensitivity: "base" });
+      })
+  );
 };
 
 const return404 = (res: Response) => {
@@ -82,7 +86,7 @@ const return404 = (res: Response) => {
 app.set("trust proxy", true);
 
 app.use(async (req: Request, res: Response, next): Promise<any> => {
-  if (req.path.includes("/.")) return res.status(403).send({ error: "naughty naughty" });
+  // if (req.path.includes("/.")) return res.status(403).send({ error: "naughty naughty" });
 
   if (systemFiles.some((file) => req.path.toLowerCase().includes(file.toLowerCase())))
     return res.status(403).send({ error: "naughty naughty" });
