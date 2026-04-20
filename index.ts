@@ -5,7 +5,7 @@ import fs, { Stats } from "fs";
 import html from "html";
 import path from "path";
 import { fileURLToPath } from "url";
-import { mimeTypes, systemFiles } from "./utils/misc.js";
+import { mimeTypes, systemFiles, videoExtensions } from "./utils/misc.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,7 +21,7 @@ const mimeTypesKeys = Object.keys(mimeTypes);
 const findMimeTypeCategory = (
   fileExtension: string,
   fileType: FileTypeResult | undefined,
-  mimeCategory: string
+  mimeCategory: string,
 ): string => {
   const mimeTypeCategory =
     mimeTypesKeys.find((key) => [fileExtension, fileType?.ext].includes(key)) ||
@@ -122,7 +122,38 @@ app.get("/*", (req: Request, res: Response) => {
     fs.stat(directoryPath, (err, stats) => {
       if (err) return return404(res);
 
-      if (!stats.isDirectory()) return res.sendFile(directoryPath); // send file
+      if (!stats.isDirectory()) {
+        // if it's a video file, stream it
+        if (stats.isFile() && videoExtensions.includes(path.extname(directoryPath).slice(1))) {
+          const range = req.headers.range;
+
+          if (!range) {
+            res.writeHead(200, { "Content-Length": stats.size, "Content-Type": "video/mp4" });
+            fs.createReadStream(directoryPath).pipe(res);
+            return;
+          }
+
+          const videoSize = stats.size;
+          const CHUNK_SIZE = 10 ** 6; // 1MB
+          const start = Number(range.replace(/\D/g, ""));
+          const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+
+          const contentLength = end - start + 1;
+          const headers = {
+            "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+            "Accept-Ranges": "bytes",
+            "Content-Length": contentLength,
+            "Content-Type": "video/mp4",
+          };
+
+          res.writeHead(206, headers);
+          const videoStream = fs.createReadStream(directoryPath, { start, end });
+          videoStream.pipe(res);
+          return;
+        }
+
+        return res.sendFile(directoryPath); // send file
+      }
 
       // display dir ui
       fs.readdir(directoryPath, async (err, files) => {
@@ -139,7 +170,7 @@ app.get("/*", (req: Request, res: Response) => {
           htmlContent
             .replace("{{DIR_NAV}}", getDirectoryPath(req))
             .replace("{{BACK_BUTTON}}", backButton)
-            .replace("{{FILE_LINKS}}", fileLinks)
+            .replace("{{FILE_LINKS}}", fileLinks),
         );
 
         res.send(prettyHtmlContent);

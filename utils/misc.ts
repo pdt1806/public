@@ -57,3 +57,5 @@ export const systemFiles: string[] = [
   ".fseventsd",
   ".VolumeIcon.icns",
 ];
+
+export const videoExtensions: string[] = ["mp4", "avi", "mkv", "webm", "mov", "flv", "wmv"];
