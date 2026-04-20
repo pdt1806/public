@@ -91,12 +91,12 @@ app.use(async (req: Request, res: Response, next): Promise<any> => {
   if (systemFiles.some((file) => req.path.toLowerCase().includes(file.toLowerCase())))
     return res.status(403).send({ error: "naughty naughty" });
 
-  if (req.path === "/r.mp4") {
-    const videoPath = path.join(__dirname, "utils", "r.mp4");
-    const referrer = req.get("Referrer") || "";
-    if (!referrer.includes("/r.mp4")) console.log(`[${new Date().toLocaleString()}] IP ${req.ip} was rick rolled`);
-    return res.sendFile(videoPath);
-  }
+  // if (req.path === "/r.mp4") {
+  //   const videoPath = path.join(__dirname, "utils", "r.mp4");
+  //   const referrer = req.get("Referrer") || "";
+  //   if (!referrer.includes("/r.mp4")) console.log(`[${new Date().toLocaleString()}] IP ${req.ip} was rick rolled`);
+  //   return res.sendFile(videoPath);
+  // }
 
   if (["/thumbnail.png", "/icon.png"].includes(req.path))
     return res.sendFile(path.join(__dirname, "utils", "images", "web", req.path.replace("/", "")));
@@ -117,6 +117,7 @@ app.use(async (req: Request, res: Response, next): Promise<any> => {
 });
 
 app.get("/*", (req: Request, res: Response) => {
+  // console.log("received request for path:", req.path);
   try {
     const directoryPath = path.join(__dirname, "public", req.params[0] || "");
     fs.stat(directoryPath, (err, stats) => {
@@ -125,14 +126,15 @@ app.get("/*", (req: Request, res: Response) => {
       if (!stats.isDirectory()) {
         // if it's a video file, stream it
         if (videoContentTypes[path.extname(directoryPath).slice(1)]) {
-          console.log(req.headers);
+          // console.log("video here");
 
-          const range = req.headers.range;
-
+          const videoSize = stats.size;
           const videoContentType =
             videoContentTypes[path.extname(directoryPath).slice(1)] || "application/octet-stream";
+          const range = req.headers.range;
 
           if (!range) {
+            // console.log("no range header, sending entire video");
             res.writeHead(200, {
               "Content-Length": stats.size,
               "Content-Type": videoContentType,
@@ -141,9 +143,8 @@ app.get("/*", (req: Request, res: Response) => {
             return;
           }
 
-          console.log("Range header:", range);
+          // console.log("Range header:", range);
 
-          const videoSize = stats.size;
           const parts = range.replace(/bytes=/, "").split("-");
           const start = parseInt(parts[0], 10);
           const end = parts[1] ? parseInt(parts[1], 10) : videoSize - 1;
@@ -162,7 +163,7 @@ app.get("/*", (req: Request, res: Response) => {
           return;
         }
 
-        console.log("serving file:", directoryPath);
+        // console.log("serving file:", directoryPath);
         return res.sendFile(directoryPath); // send file
       }
 
