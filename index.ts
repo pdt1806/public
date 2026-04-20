@@ -5,7 +5,7 @@ import fs, { Stats } from "fs";
 import html from "html";
 import path from "path";
 import { fileURLToPath } from "url";
-import { mimeTypes, systemFiles, videoExtensions } from "./utils/misc.js";
+import { mimeTypes, systemFiles, videoContentTypes } from "./utils/misc.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -124,13 +124,19 @@ app.get("/*", (req: Request, res: Response) => {
 
       if (!stats.isDirectory()) {
         // if it's a video file, stream it
-        if (stats.isFile() && videoExtensions.includes(path.extname(directoryPath).slice(1))) {
+        if (videoContentTypes[path.extname(directoryPath).slice(1)]) {
           console.log(req.headers);
 
           const range = req.headers.range;
 
+          const videoContentType =
+            videoContentTypes[path.extname(directoryPath).slice(1)] || "application/octet-stream";
+
           if (!range) {
-            res.writeHead(200, { "Content-Length": stats.size, "Content-Type": "video/mp4" });
+            res.writeHead(200, {
+              "Content-Length": stats.size,
+              "Content-Type": videoContentType,
+            });
             fs.createReadStream(directoryPath).pipe(res);
             return;
           }
@@ -147,7 +153,7 @@ app.get("/*", (req: Request, res: Response) => {
             "Content-Range": `bytes ${start}-${end}/${videoSize}`,
             "Accept-Ranges": "bytes",
             "Content-Length": chunkSize,
-            "Content-Type": "video/mp4",
+            "Content-Type": videoContentType,
           };
 
           res.writeHead(206, headers);
@@ -156,6 +162,7 @@ app.get("/*", (req: Request, res: Response) => {
           return;
         }
 
+        console.log("serving file:", directoryPath);
         return res.sendFile(directoryPath); // send file
       }
 
