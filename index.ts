@@ -125,6 +125,8 @@ app.get("/*", (req: Request, res: Response) => {
       if (!stats.isDirectory()) {
         // if it's a video file, stream it
         if (stats.isFile() && videoExtensions.includes(path.extname(directoryPath).slice(1))) {
+          console.log(req.headers);
+
           const range = req.headers.range;
 
           if (!range) {
@@ -133,16 +135,18 @@ app.get("/*", (req: Request, res: Response) => {
             return;
           }
 
-          const videoSize = stats.size;
-          const CHUNK_SIZE = 10 ** 6; // 1MB
-          const start = Number(range.replace(/\D/g, ""));
-          const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+          console.log("Range header:", range);
 
-          const contentLength = end - start + 1;
+          const videoSize = stats.size;
+          const parts = range.replace(/bytes=/, "").split("-");
+          const start = parseInt(parts[0], 10);
+          const end = parts[1] ? parseInt(parts[1], 10) : videoSize - 1;
+          const chunkSize = end - start + 1;
+
           const headers = {
             "Content-Range": `bytes ${start}-${end}/${videoSize}`,
             "Accept-Ranges": "bytes",
-            "Content-Length": contentLength,
+            "Content-Length": chunkSize,
             "Content-Type": "video/mp4",
           };
 
