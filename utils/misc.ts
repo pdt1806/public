@@ -58,7 +58,7 @@ export const systemFiles: string[] = [
   ".VolumeIcon.icns",
 ];
 
-export const videoContentTypes: { [key: string]: string } = {
+export const mediaContentTypes: { [key: string]: string } = {
   mp4: "video/mp4",
   avi: "video/x-msvideo",
   mkv: "video/x-matroska",
@@ -66,4 +66,11 @@ export const videoContentTypes: { [key: string]: string } = {
   mov: "video/quicktime",
   flv: "video/x-flv",
   wmv: "video/x-ms-wmv",
+
+  mp3: "audio/mpeg",
+  wav: "audio/wav",
+  ogg: "audio/ogg",
+  flac: "audio/flac",
+  aac: "audio/aac",
+  m4a: "audio/mp4",
 };

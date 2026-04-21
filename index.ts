@@ -5,7 +5,7 @@ import fs, { Stats } from "fs";
 import html from "html";
 import path from "path";
 import { fileURLToPath } from "url";
-import { mimeTypes, systemFiles, videoContentTypes } from "./utils/misc.js";
+import { mediaContentTypes, mimeTypes, systemFiles } from "./utils/misc.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -81,6 +81,59 @@ const return404 = (res: Response) => {
   res.status(404).send(htmlContent);
 };
 
+const handleMediaRequest = (req: Request, res: Response, stats: Stats, directoryPath: string) => {
+  const mediaSize = stats.size;
+  const mediaContentType = mediaContentTypes[path.extname(directoryPath).slice(1)] || "application/octet-stream";
+  const range = req.headers.range;
+
+  if (!range) {
+    res.writeHead(200, {
+      "Content-Length": stats.size,
+      "Content-Type": mediaContentType,
+    });
+    fs.createReadStream(directoryPath).pipe(res);
+    return;
+  }
+
+  const parts = range.replace(/bytes=/, "").split("-");
+  const start = parseInt(parts[0], 10);
+  const end = parts[1] ? parseInt(parts[1], 10) : mediaSize - 1;
+  const chunkSize = end - start + 1;
+
+  const headers = {
+    "Content-Range": `bytes ${start}-${end}/${mediaSize}`,
+    "Accept-Ranges": "bytes",
+    "Content-Length": chunkSize,
+    "Content-Type": mediaContentType,
+  };
+
+  res.writeHead(206, headers);
+  const mediaStream = fs.createReadStream(directoryPath, { start, end });
+  mediaStream.pipe(res);
+};
+
+const renderDirectoryUI = (req: Request, res: Response, directoryPath: string) => {
+  // display dir ui
+  fs.readdir(directoryPath, async (err, files) => {
+    if (err) return res.status(500).send({ error: "Internal server error" });
+
+    const fileLinks = (await Promise.all(sortFiles(files).map((file) => processFile(req, directoryPath, file)))).join(
+      "",
+    );
+
+    const backButton = req.path !== "/" ? `<a href="${path.join(req.path, "..")}" class="file">⬅️ Back</a><br />` : "";
+
+    const prettyHtmlContent = html.prettyPrint(
+      htmlContent
+        .replace("{{DIR_NAV}}", getDirectoryPath(req))
+        .replace("{{BACK_BUTTON}}", backButton)
+        .replace("{{FILE_LINKS}}", fileLinks),
+    );
+
+    res.send(prettyHtmlContent);
+  });
+};
+
 // ----------------------------------------------------------
 
 app.set("trust proxy", true);
@@ -90,13 +143,6 @@ app.use(async (req: Request, res: Response, next): Promise<any> => {
 
   if (systemFiles.some((file) => req.path.toLowerCase().includes(file.toLowerCase())))
     return res.status(403).send({ error: "naughty naughty" });
-
-  // if (req.path === "/r.mp4") {
-  //   const videoPath = path.join(__dirname, "utils", "r.mp4");
-  //   const referrer = req.get("Referrer") || "";
-  //   if (!referrer.includes("/r.mp4")) console.log(`[${new Date().toLocaleString()}] IP ${req.ip} was rick rolled`);
-  //   return res.sendFile(videoPath);
-  // }
 
   if (["/thumbnail.png", "/icon.png"].includes(req.path))
     return res.sendFile(path.join(__dirname, "utils", "images", "web", req.path.replace("/", "")));
@@ -117,76 +163,20 @@ app.use(async (req: Request, res: Response, next): Promise<any> => {
 });
 
 app.get("/*", (req: Request, res: Response) => {
-  // console.log("received request for path:", req.path);
   try {
     const directoryPath = path.join(__dirname, "public", req.params[0] || "");
     fs.stat(directoryPath, (err, stats) => {
       if (err) return return404(res);
 
-      if (!stats.isDirectory()) {
-        // if it's a video file, stream it
-        if (videoContentTypes[path.extname(directoryPath).slice(1)]) {
-          // console.log("video here");
+      // if it's a directory, render the directory UI
+      if (stats.isDirectory()) return renderDirectoryUI(req, res, directoryPath);
 
-          const videoSize = stats.size;
-          const videoContentType =
-            videoContentTypes[path.extname(directoryPath).slice(1)] || "application/octet-stream";
-          const range = req.headers.range;
+      // if it's a media file, stream it
+      if (mediaContentTypes[path.extname(directoryPath).slice(1)])
+        return handleMediaRequest(req, res, stats, directoryPath);
 
-          if (!range) {
-            // console.log("no range header, sending entire video");
-            res.writeHead(200, {
-              "Content-Length": stats.size,
-              "Content-Type": videoContentType,
-            });
-            fs.createReadStream(directoryPath).pipe(res);
-            return;
-          }
-
-          // console.log("Range header:", range);
-
-          const parts = range.replace(/bytes=/, "").split("-");
-          const start = parseInt(parts[0], 10);
-          const end = parts[1] ? parseInt(parts[1], 10) : videoSize - 1;
-          const chunkSize = end - start + 1;
-
-          const headers = {
-            "Content-Range": `bytes ${start}-${end}/${videoSize}`,
-            "Accept-Ranges": "bytes",
-            "Content-Length": chunkSize,
-            "Content-Type": videoContentType,
-          };
-
-          res.writeHead(206, headers);
-          const videoStream = fs.createReadStream(directoryPath, { start, end });
-          videoStream.pipe(res);
-          return;
-        }
-
-        // console.log("serving file:", directoryPath);
-        return res.sendFile(directoryPath); // send file
-      }
-
-      // display dir ui
-      fs.readdir(directoryPath, async (err, files) => {
-        if (err) return res.status(500).send({ error: "Internal server error" });
-
-        const fileLinks = (
-          await Promise.all(sortFiles(files).map((file) => processFile(req, directoryPath, file)))
-        ).join("");
-
-        const backButton =
-          req.path !== "/" ? `<a href="${path.join(req.path, "..")}" class="file">⬅️ Back</a><br />` : "";
-
-        const prettyHtmlContent = html.prettyPrint(
-          htmlContent
-            .replace("{{DIR_NAV}}", getDirectoryPath(req))
-            .replace("{{BACK_BUTTON}}", backButton)
-            .replace("{{FILE_LINKS}}", fileLinks),
-        );
-
-        res.send(prettyHtmlContent);
-      });
+      // send file
+      return res.sendFile(directoryPath);
     });
   } catch (error) {
     res.status(500).send({ error: "Internal server error" });
